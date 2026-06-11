@@ -40,11 +40,11 @@ class ConfigGUI:
         
         self.root = tk.Tk()
         self.root.title("自动化解压处理工具 - 设置中心")
-        self.root.geometry("850x650")
+        self.root.geometry("950x650")
         self.root.configure(bg="#f0f2f5")
         
         self.root.update_idletasks()
-        width = 850
+        width = 950
         height = 650
         x = (self.root.winfo_screenwidth() // 2) - (width // 2)
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
@@ -184,6 +184,9 @@ class ConfigGUI:
         uninstall_btn = ttk.Button(btn_frame, text="🗑 移除右键菜单", command=self.uninstall_menu)
         uninstall_btn.pack(side=tk.LEFT, padx=10)
         
+        open_log_btn = ttk.Button(btn_frame, text="📂 查看运行日志", command=self.open_log_dir)
+        open_log_btn.pack(side=tk.RIGHT, padx=10)
+        
         # Status Label
         self.status_var = tk.StringVar()
         ttk.Label(main_container, textvariable=self.status_var, foreground="#52c41a", font=("Microsoft YaHei", 9, "bold")).pack(pady=(15, 0))
@@ -230,6 +233,29 @@ class ConfigGUI:
             self.status_var.set(f"✅ {msg}")
         else:
             messagebox.showerror("系统错误", f"移除失败:\n{msg}", parent=self.root)
+            
+    def open_log_dir(self):
+        import os
+        import platform
+        import subprocess
+        
+        if os.name == 'nt':
+            log_dir = os.path.join(os.getenv('LOCALAPPDATA', os.path.expanduser('~')), 'autoHao', 'logs')
+        else:
+            log_dir = os.path.join(os.path.expanduser('~'), '.config', 'autoHao', 'logs')
+            
+        if not os.path.exists(log_dir):
+            try:
+                os.makedirs(log_dir)
+            except OSError:
+                pass
+                
+        if platform.system() == "Windows":
+            os.startfile(log_dir)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", log_dir])
+        else:
+            subprocess.Popen(["xdg-open", log_dir])
             
     def run(self):
         self.root.mainloop()
