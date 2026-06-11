@@ -40,12 +40,12 @@ class ConfigGUI:
         
         self.root = tk.Tk()
         self.root.title("自动化解压处理工具 - 设置中心")
-        self.root.geometry("650x750")
+        self.root.geometry("850x650")
         self.root.configure(bg="#f0f2f5")
         
         self.root.update_idletasks()
-        width = self.root.winfo_width()
-        height = self.root.winfo_height()
+        width = 850
+        height = 650
         x = (self.root.winfo_screenwidth() // 2) - (width // 2)
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry('{}x{}+{}+{}'.format(width, height, x, y))
@@ -83,9 +83,15 @@ class ConfigGUI:
         
         ttk.Label(main_container, text="系统全局配置", style="Header.TLabel").pack(anchor=tk.W, pady=(0, 15))
         
+        # Create a frame to hold the cards in a 2x2 grid
+        cards_container = ttk.Frame(main_container, style="TFrame")
+        cards_container.pack(fill=tk.BOTH, expand=True)
+        cards_container.columnconfigure(0, weight=1)
+        cards_container.columnconfigure(1, weight=1)
+        
         # Card 1: Basic settings
-        card1 = ttk.Frame(main_container, style="Card.TFrame", padding="15 15 15 15")
-        card1.pack(fill=tk.X, pady=(0, 15))
+        card1 = ttk.Frame(cards_container, style="Card.TFrame", padding="15 15 15 15")
+        card1.grid(row=0, column=0, padx=(0, 10), pady=(0, 15), sticky="nsew")
         ttk.Label(card1, text="基础信息", style="SubHeader.TLabel").grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 10))
         
         ttk.Label(card1, text="作者 (提交人):").grid(row=1, column=0, sticky=tk.E, pady=5, padx=(0, 10))
@@ -107,8 +113,8 @@ class ConfigGUI:
         ttk.Label(card1, text="天 (0为永久)").grid(row=3, column=1, sticky=tk.E, padx=(0, 100))
         
         # Card 2: Path settings
-        card2 = ttk.Frame(main_container, style="Card.TFrame", padding="15 15 15 15")
-        card2.pack(fill=tk.X, pady=(0, 15))
+        card2 = ttk.Frame(cards_container, style="Card.TFrame", padding="15 15 15 15")
+        card2.grid(row=0, column=1, padx=(10, 0), pady=(0, 15), sticky="nsew")
         ttk.Label(card2, text="路径与表格配置", style="SubHeader.TLabel").grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 10))
         
         ttk.Label(card2, text="解压保存文件夹:").grid(row=1, column=0, sticky=tk.E, pady=5, padx=(0, 10))
@@ -128,8 +134,8 @@ class ConfigGUI:
         create_tooltip(tmpl_entry, "支持动态标签: {author}, {year}, {month}, {day}\n例如: {author}_汇总_{year}.csv")
         
         # Card 3: Advanced Settings
-        card3 = ttk.Frame(main_container, style="Card.TFrame", padding="15 15 15 15")
-        card3.pack(fill=tk.X, pady=(0, 15))
+        card3 = ttk.Frame(cards_container, style="Card.TFrame", padding="15 15 15 15")
+        card3.grid(row=1, column=0, padx=(0, 10), pady=(0, 15), sticky="nsew")
         ttk.Label(card3, text="文本尾注设置", style="SubHeader.TLabel").grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 10))
         
         ttk.Label(card3, text="尾注插入位置:").grid(row=1, column=0, sticky=tk.E, pady=5, padx=(0, 10))
@@ -153,8 +159,8 @@ class ConfigGUI:
         self.txt_comment.grid(row=3, column=1, pady=5, sticky=tk.W)
 
         # Card 4: Monitor Settings
-        card4 = ttk.Frame(main_container, style="Card.TFrame", padding="15 15 15 15")
-        card4.pack(fill=tk.X, pady=(0, 15))
+        card4 = ttk.Frame(cards_container, style="Card.TFrame", padding="15 15 15 15")
+        card4.grid(row=1, column=1, padx=(10, 0), pady=(0, 15), sticky="nsew")
         ttk.Label(card4, text="后台文件夹监控", style="SubHeader.TLabel").grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 10))
         
         self.var_enable_monitor = tk.BooleanVar(value=self.config.get("ENABLE_MONITOR", False))
