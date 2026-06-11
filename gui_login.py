@@ -7,7 +7,7 @@ class LoginDialog:
     def __init__(self, parent):
         self.top = tk.Toplevel(parent)
         self.top.title("系统登录")
-        self.top.geometry("350x250")
+        self.top.geometry("350x280")
         self.top.resizable(False, False)
         
         # Center the window
@@ -50,6 +50,8 @@ class LoginDialog:
         
         ttk.Button(btn_frame, text="登 录", command=self.attempt_login).pack(side=tk.RIGHT, padx=5)
         ttk.Button(btn_frame, text="退 出", command=self.top.destroy).pack(side=tk.RIGHT)
+        
+        ttk.Label(self.top, text="AutoHao v1.0 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="gray").pack(side=tk.BOTTOM, pady=10)
         
         self.top.bind('<Return>', lambda e: self.attempt_login())
         

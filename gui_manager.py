@@ -40,11 +40,11 @@ class ConfigGUI:
         
         self.root = tk.Tk()
         self.root.title("自动化解压处理工具 - 设置中心")
-        self.root.geometry("950x650")
+        self.root.geometry("1050x650")
         self.root.configure(bg="#f0f2f5")
         
         self.root.update_idletasks()
-        width = 950
+        width = 1050
         height = 650
         x = (self.root.winfo_screenwidth() // 2) - (width // 2)
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
@@ -192,7 +192,7 @@ class ConfigGUI:
         ttk.Label(main_container, textvariable=self.status_var, foreground="#52c41a", font=("Microsoft YaHei", 9, "bold")).pack(pady=(15, 0))
         
         # Copyright
-        ttk.Label(self.root, text="Copyright © 2026 AutoHao v1.2 | 系统组研制", font=("Microsoft YaHei", 8, "italic"), foreground="#8c8c8c", background="#f0f2f5").pack(side=tk.BOTTOM, pady=10)
+        ttk.Label(self.root, text="Copyright © 2026 AutoHao v1.0 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="#8c8c8c", background="#f0f2f5").pack(side=tk.BOTTOM, pady=10)
 
     def browse_dir(self, string_var):
         dir_path = filedialog.askdirectory(parent=self.root)
