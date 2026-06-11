@@ -2,9 +2,8 @@ name: Build and Release
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
   test:
@@ -53,6 +52,12 @@ jobs:
       with:
         name: autoHao_${{ matrix.name }}
         path: dist/autoHao_${{ matrix.name }}*
+        
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: dist/autoHao_${{ matrix.name }}*
 
   build-arm:
     needs: test
@@ -75,3 +80,9 @@ jobs:
         with:
           name: autoHao_linux-arm64
           path: dist/autoHao_linux-arm64*
+          
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/autoHao_linux-arm64*
