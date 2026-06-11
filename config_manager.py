@@ -11,7 +11,7 @@ class ConfigManager:
             
         self.config_file = os.path.join(self.config_dir, 'config.json')
         self.default_config = {
-            "PRE_FIX": "（北部战区）",
+            "PRE_FIX": "（bbzq）",
             "TARGET_DIR": os.path.join(os.path.expanduser('~'), "Downloads", "Extracted"),
             "CSV_FOLDER_PATH": os.path.join(os.path.expanduser('~'), "Documents"),
             "CSV_NAME_TEMPLATE": "{author}_上报条目_{year}-{month}.csv",
@@ -19,7 +19,9 @@ class ConfigManager:
             "INSERT_POS": "before_keyword", # 'before_keyword' or 'at_eof'
             "FILE_ENCODING": "auto", # 'auto', 'gbk', 'utf-8'
             "AUTHOR": "未命名",
-            "LOG_RETENTION_DAYS": 15
+            "LOG_RETENTION_DAYS": 15,
+            "MONITOR_DIR": "",
+            "ENABLE_MONITOR": False
         }
         self.config = self.load_config()
 

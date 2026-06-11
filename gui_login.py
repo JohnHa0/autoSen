@@ -74,7 +74,7 @@ class LoginDialog:
                 self.top.destroy()
                 return
             else:
-                messagebox.showerror("错误", "密码错误！实名认证默认密码为 12345!", parent=self.top)
+                messagebox.showerror("错误", "密码错误！", parent=self.top)
                 return
                 
         messagebox.showerror("错误", "账号或密码错误！\n支持纯中文姓名登录或管理员账户", parent=self.top)
