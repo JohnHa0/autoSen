@@ -70,7 +70,7 @@ jobs:
         
       - name: Build on ARM64
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace arm64v8/python:3.8-slim bash -c "\
+          docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/workspace -w /workspace python:3.8-slim bash -c "\
           pip install pyinstaller chardet && \
           apt-get update && apt-get install -y binutils && \
           pyinstaller --noconfirm --onefile --windowed --name autoHao_linux-arm64 main.py"
