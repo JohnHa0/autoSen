@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# 设置换行符为分隔符，防止文件名中有空格导致解析错误
+IFS=$'\n'
+
+# 遍历 Caja 传过来的所有选中文件
+for file in $CAJA_SCRIPT_SELECTED_FILE_PATHS; do
+    # 调用我们的纯净版 Python 脚本处理文件
+    python3 /root/文档/autoHao.py "$file"
+done
+
+# 弹出桌面通知提醒
+notify-send "✅ 任务完成" "选中的压缩包已解压整理，CSV 清单已更新！"
+
+
+# 存放位置：/root/.config/caja/scripts
