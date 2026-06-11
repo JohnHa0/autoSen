@@ -11,11 +11,11 @@ class ConfigManager:
             
         self.config_file = os.path.join(self.config_dir, 'config.json')
         self.default_config = {
-            "PRE_FIX": "（bbzq）",
+            "PRE_FIX": "（输入你想添加的文件名前缀）",
             "TARGET_DIR": os.path.join(os.path.expanduser('~'), "Downloads", "Extracted"),
             "CSV_FOLDER_PATH": os.path.join(os.path.expanduser('~'), "Documents"),
             "CSV_NAME_TEMPLATE": "{author}_上报条目_{year}-{month}.csv",
-            "COMMENT": "（黄枫谷）\n（根据银月上报）",
+            "COMMENT": "（第一行尾注）\n（第二行尾注）",
             "INSERT_POS": "before_keyword", # 'before_keyword' or 'at_eof'
             "FILE_ENCODING": "auto", # 'auto', 'gbk', 'utf-8'
             "AUTHOR": "未命名",
