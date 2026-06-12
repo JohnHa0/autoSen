@@ -154,7 +154,7 @@ def process_archive(archive_path, config):
         logger.error("解压失败 {}: {}".format(archive_path, e))
         return
 
-    pre_fix = config.get("PRE_FIX", "（北部战区）")
+    pre_fix = config.get("PRE_FIX", "（文件前缀名）")
     
     for root, dirs, files in os.walk(extract_folder):
         for file in files:
