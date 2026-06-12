@@ -107,6 +107,7 @@ jobs:
           pip install pyinstaller chardet && \
           apt-get update && apt-get install -y binutils && \
           pyinstaller --noconfirm --onefile --windowed --name autoHao_linux-arm64 main.py"
+          sudo chown -R $USER:$USER dist build || true
           
       - name: Build Debian Package (ARM64)
         run: |
