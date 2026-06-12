@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 import { 
   Save, Menu, Trash2, FileText, FolderOpen, AlertCircle, 
   Settings, User, FileCode2, Database, ShieldCheck, HelpCircle
@@ -58,37 +60,60 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ currentUser }: DashboardProps) {
-  // --- 状态定义 (模拟配置项) ---
+  // --- 状态定义 ---
   const [config, setConfig] = useState({
     author: currentUser !== 'tsrhs' ? currentUser : '未命名',
-    preFix: '（文件前缀名）',
-    logRetentionDays: '7',
-    targetDir: '',
-    csvFolder: '',
-    csvTmpl: '{author}_上报条目_{year}-{month}.csv',
-    insertPos: 'before_keyword',
-    fileEncoding: 'auto',
+    pre_fix: '（文件前缀名）',
+    log_retention_days: '7',
+    target_dir: '',
+    csv_folder: '',
+    csv_tmpl: '{author}_上报条目_{year}-{month}.csv',
+    insert_pos: 'before_keyword',
+    file_encoding: 'auto',
     comment: '',
-    enableMonitor: false,
-    monitorOnlyTxt: true,
-    monitorDir: ''
+    enable_monitor: false,
+    monitor_only_txt: true,
+    monitor_dir: ''
   });
 
   const [statusMsg, setStatusMsg] = useState({ text: '', type: 'success' });
 
-  // 模拟保存和处理函数
+  useEffect(() => {
+    invoke('get_config').then((data: any) => {
+      setConfig(prev => ({
+        ...prev,
+        ...data,
+        author: currentUser !== 'tsrhs' ? currentUser : data.author,
+      }));
+    });
+  }, [currentUser]);
+
   const showStatus = (text: string, type: 'success' | 'error' = 'success') => {
     setStatusMsg({ text, type });
     setTimeout(() => setStatusMsg({ text: '', type: 'success' }), 3000);
   };
 
-  const handleSave = () => {
-    // 实际将调用 Tauri Rust API 写入 config.json
-    showStatus('✅ 配置已成功保存！');
+  const handleSave = async () => {
+    try {
+      await invoke('update_config', { newConfig: config });
+      showStatus('✅ 配置已成功保存！并应用到系统');
+    } catch (e) {
+      showStatus(`保存失败: ${e}`, 'error');
+    }
   };
 
   const handleChange = (field: keyof typeof config, value: any) => {
     setConfig(prev => ({ ...prev, [field]: value }));
+  };
+
+  const pickFolder = async (field: keyof typeof config) => {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+    });
+    if (selected) {
+      handleChange(field, selected as string);
+    }
   };
 
   return (
@@ -128,7 +153,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className="flex items-center gap-4">
                 <label className="w-28 text-right text-sm font-medium text-gray-600">重命名前缀:</label>
                 <div className="flex-1 flex gap-2 items-center">
-                  <input type="text" value={config.preFix} onChange={e => handleChange('preFix', e.target.value)}
+                  <input type="text" value={config.pre_fix} onChange={e => handleChange('pre_fix', e.target.value)}
                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                   <Tooltip content="自动解压出的文本文件开头，会用此文本替换【原文】"><HelpCircle className="w-4 h-4 text-gray-400 cursor-help" /></Tooltip>
                 </div>
@@ -136,7 +161,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className="flex items-center gap-4">
                 <label className="w-28 text-right text-sm font-medium text-gray-600">日志保留周期:</label>
                 <div className="flex-1 flex gap-2 items-center">
-                  <select value={config.logRetentionDays} onChange={e => handleChange('logRetentionDays', e.target.value)}
+                  <select value={config.log_retention_days} onChange={e => handleChange('log_retention_days', e.target.value)}
                           className="w-32 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="7">7 天</option>
                     <option value="15">15 天</option>
@@ -154,23 +179,23 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className="flex items-center gap-4">
                 <label className="w-32 text-right text-sm font-medium text-gray-600">解压保存文件夹:</label>
                 <div className="flex-1 flex gap-2">
-                  <input type="text" value={config.targetDir} onChange={e => handleChange('targetDir', e.target.value)}
+                  <input type="text" value={config.target_dir} onChange={e => handleChange('target_dir', e.target.value)}
                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" readOnly placeholder="请选择目录..." />
-                  <button className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors border border-gray-200">浏览...</button>
+                  <button onClick={() => pickFolder('target_dir')} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors border border-gray-200">浏览...</button>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <label className="w-32 text-right text-sm font-medium text-gray-600">CSV 表格目录:</label>
                 <div className="flex-1 flex gap-2">
-                  <input type="text" value={config.csvFolder} onChange={e => handleChange('csvFolder', e.target.value)}
+                  <input type="text" value={config.csv_folder} onChange={e => handleChange('csv_folder', e.target.value)}
                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" readOnly placeholder="请选择目录..." />
-                  <button className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors border border-gray-200">浏览...</button>
+                  <button onClick={() => pickFolder('csv_folder')} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors border border-gray-200">浏览...</button>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <label className="w-32 text-right text-sm font-medium text-gray-600">CSV 命名模板:</label>
                 <div className="flex-1 flex gap-2 items-center">
-                  <input type="text" value={config.csvTmpl} onChange={e => handleChange('csvTmpl', e.target.value)}
+                  <input type="text" value={config.csv_tmpl} onChange={e => handleChange('csv_tmpl', e.target.value)}
                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                   <Tooltip content={"支持动态标签: {author}, {year}, {month}, {day}\n例如: {author}_汇总_{year}.csv"}><HelpCircle className="w-4 h-4 text-gray-400 cursor-help" /></Tooltip>
                 </div>
@@ -184,7 +209,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className="flex items-center gap-4">
                 <label className="w-28 text-right text-sm font-medium text-gray-600">尾注插入位置:</label>
                 <div className="flex-1 flex gap-2 items-center">
-                  <select value={config.insertPos} onChange={e => handleChange('insertPos', e.target.value)}
+                  <select value={config.insert_pos} onChange={e => handleChange('insert_pos', e.target.value)}
                           className="w-40 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="before_keyword">主题词上一行</option>
                     <option value="at_eof">文件末尾</option>
@@ -194,7 +219,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className="flex items-center gap-4">
                 <label className="w-28 text-right text-sm font-medium text-gray-600">文本读写编码:</label>
                 <div className="flex-1 flex gap-2 items-center">
-                  <select value={config.fileEncoding} onChange={e => handleChange('fileEncoding', e.target.value)}
+                  <select value={config.file_encoding} onChange={e => handleChange('file_encoding', e.target.value)}
                           className="w-40 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="auto">自动检测</option>
                     <option value="gbk">统当为 GBK</option>
@@ -218,18 +243,18 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             <div className="space-y-5">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <div className="relative">
-                  <input type="checkbox" checked={config.enableMonitor} onChange={e => handleChange('enableMonitor', e.target.checked)} className="sr-only" />
-                  <div className={`block w-10 h-6 rounded-full transition-colors ${config.enableMonitor ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                  <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.enableMonitor ? 'translate-x-4' : ''}`}></div>
+                  <input type="checkbox" checked={config.enable_monitor} onChange={e => handleChange('enable_monitor', e.target.checked)} className="sr-only" />
+                  <div className={`block w-10 h-6 rounded-full transition-colors ${config.enable_monitor ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                  <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.enable_monitor ? 'translate-x-4' : ''}`}></div>
                 </div>
                 <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">开启指定文件夹监控 (发现新压缩包自动处理)</span>
               </label>
 
               <label className="flex items-center gap-3 cursor-pointer group">
                 <div className="relative">
-                  <input type="checkbox" checked={config.monitorOnlyTxt} onChange={e => handleChange('monitorOnlyTxt', e.target.checked)} className="sr-only" />
-                  <div className={`block w-10 h-6 rounded-full transition-colors ${config.monitorOnlyTxt ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
-                  <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.monitorOnlyTxt ? 'translate-x-4' : ''}`}></div>
+                  <input type="checkbox" checked={config.monitor_only_txt} onChange={e => handleChange('monitor_only_txt', e.target.checked)} className="sr-only" />
+                  <div className={`block w-10 h-6 rounded-full transition-colors ${config.monitor_only_txt ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
+                  <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.monitor_only_txt ? 'translate-x-4' : ''}`}></div>
                 </div>
                 <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">仅当压缩包内包含 TXT 文件时才处理</span>
               </label>
@@ -237,10 +262,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className="flex items-center gap-4 pt-2">
                 <label className="w-24 text-right text-sm font-medium text-gray-600">监控文件夹:</label>
                 <div className="flex-1 flex gap-2">
-                  <input type="text" value={config.monitorDir} onChange={e => handleChange('monitorDir', e.target.value)}
-                         className={`flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none transition-colors ${!config.enableMonitor ? 'bg-gray-100 text-gray-400' : 'bg-gray-50 focus:ring-2 focus:ring-blue-500'}`} 
-                         readOnly disabled={!config.enableMonitor} placeholder="请选择目录..." />
-                  <button disabled={!config.enableMonitor} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors border border-gray-200 disabled:opacity-50">浏览...</button>
+                  <input type="text" value={config.monitor_dir} onChange={e => handleChange('monitor_dir', e.target.value)}
+                         className={`flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none transition-colors ${!config.enable_monitor ? 'bg-gray-100 text-gray-400' : 'bg-gray-50 focus:ring-2 focus:ring-blue-500'}`} 
+                         readOnly disabled={!config.enable_monitor} placeholder="请选择目录..." />
+                  <button onClick={() => pickFolder('monitor_dir')} disabled={!config.enable_monitor} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors border border-gray-200 disabled:opacity-50">浏览...</button>
                 </div>
               </div>
             </div>
