@@ -94,11 +94,11 @@ class ConfigGUI:
         card1.grid(row=0, column=0, padx=(0, 10), pady=(0, 15), sticky="nsew")
         ttk.Label(card1, text="基础信息", style="SubHeader.TLabel").grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 10))
         
-        ttk.Label(card1, text="作者 (提交人):").grid(row=1, column=0, sticky=tk.E, pady=5, padx=(0, 10))
+        ttk.Label(card1, text="编者:").grid(row=1, column=0, sticky=tk.E, pady=5, padx=(0, 10))
         self.var_author = tk.StringVar(value=self.config.get("AUTHOR"))
         author_entry = ttk.Entry(card1, textvariable=self.var_author, width=35)
         author_entry.grid(row=1, column=1, pady=5, sticky=tk.W)
-        create_tooltip(author_entry, "用于在统计表格中记录处理人姓名")
+        create_tooltip(author_entry, "用于在统计表格中记录编者姓名")
         
         ttk.Label(card1, text="重命名前缀:").grid(row=2, column=0, sticky=tk.E, pady=5, padx=(0, 10))
         self.var_prefix = tk.StringVar(value=self.config.get("PRE_FIX"))
