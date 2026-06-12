@@ -21,7 +21,8 @@ class ConfigManager:
             "AUTHOR": "未命名",
             "LOG_RETENTION_DAYS": 15,
             "MONITOR_DIR": "",
-            "ENABLE_MONITOR": False
+            "ENABLE_MONITOR": False,
+            "MONITOR_ONLY_TXT": False
         }
         self.config = self.load_config()
 

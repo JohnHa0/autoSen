@@ -166,10 +166,13 @@ class ConfigGUI:
         self.var_enable_monitor = tk.BooleanVar(value=self.config.get("ENABLE_MONITOR", False))
         ttk.Checkbutton(card4, text="开启指定文件夹监控 (发现新压缩包自动处理)", variable=self.var_enable_monitor).grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=5)
         
-        ttk.Label(card4, text="监控文件夹:").grid(row=2, column=0, sticky=tk.E, pady=5, padx=(0, 10))
+        self.var_monitor_only_txt = tk.BooleanVar(value=self.config.get("MONITOR_ONLY_TXT", False))
+        ttk.Checkbutton(card4, text="仅当压缩包内包含TXT文件时才处理", variable=self.var_monitor_only_txt).grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=5)
+
+        ttk.Label(card4, text="监控文件夹:").grid(row=3, column=0, sticky=tk.E, pady=5, padx=(0, 10))
         self.var_monitor_dir = tk.StringVar(value=self.config.get("MONITOR_DIR", ""))
-        ttk.Entry(card4, textvariable=self.var_monitor_dir, width=40).grid(row=2, column=1, pady=5, sticky=tk.W)
-        ttk.Button(card4, text="浏览...", command=lambda: self.browse_dir(self.var_monitor_dir)).grid(row=2, column=2, padx=10)
+        ttk.Entry(card4, textvariable=self.var_monitor_dir, width=40).grid(row=3, column=1, pady=5, sticky=tk.W)
+        ttk.Button(card4, text="浏览...", command=lambda: self.browse_dir(self.var_monitor_dir)).grid(row=3, column=2, padx=10)
 
         # Buttons
         btn_frame = ttk.Frame(main_container, style="TFrame")
@@ -192,7 +195,7 @@ class ConfigGUI:
         ttk.Label(main_container, textvariable=self.status_var, foreground="#52c41a", font=("Microsoft YaHei", 9, "bold")).pack(pady=(15, 0))
         
         # Copyright
-        ttk.Label(self.root, text="Copyright © 2026 AutoHao v1.0 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="#8c8c8c", background="#f0f2f5").pack(side=tk.BOTTOM, pady=10)
+        ttk.Label(self.root, text="Copyright © 2026 AutoHao v1.0.2 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="#8c8c8c", background="#f0f2f5").pack(side=tk.BOTTOM, pady=10)
 
     def browse_dir(self, string_var):
         dir_path = filedialog.askdirectory(parent=self.root)
@@ -216,6 +219,7 @@ class ConfigGUI:
         self.config.set("LOG_RETENTION_DAYS", int(self.var_log_retention.get()))
         self.config.set("MONITOR_DIR", self.var_monitor_dir.get().strip())
         self.config.set("ENABLE_MONITOR", self.var_enable_monitor.get())
+        self.config.set("MONITOR_ONLY_TXT", self.var_monitor_only_txt.get())
         
         self.status_var.set("✅ 配置已成功保存！")
         self.root.after(3000, lambda: self.status_var.set(""))
