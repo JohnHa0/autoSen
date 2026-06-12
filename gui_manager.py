@@ -50,6 +50,20 @@ class ConfigGUI:
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry('{}x{}+{}+{}'.format(width, height, x, y))
         
+        # Set icon
+        try:
+            import sys, os
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+        icon_path = os.path.join(base_path, 'logo.png')
+        if os.path.exists(icon_path):
+            try:
+                photo = tk.PhotoImage(file=icon_path)
+                self.root.iconphoto(True, photo)
+            except Exception:
+                pass
+                
         self.system_integrator = SystemIntegrator()
         
         # Start Background Monitor
@@ -195,7 +209,7 @@ class ConfigGUI:
         ttk.Label(main_container, textvariable=self.status_var, foreground="#52c41a", font=("Microsoft YaHei", 9, "bold")).pack(pady=(15, 0))
         
         # Copyright
-        ttk.Label(self.root, text="Copyright © 2026 AutoHao v1.0.4 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="#8c8c8c", background="#f0f2f5").pack(side=tk.BOTTOM, pady=10)
+        ttk.Label(self.root, text="Copyright © 2026 AutoHao v1.0.5 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="#8c8c8c", background="#f0f2f5").pack(side=tk.BOTTOM, pady=10)
 
     def browse_dir(self, string_var):
         dir_path = filedialog.askdirectory(parent=self.root)

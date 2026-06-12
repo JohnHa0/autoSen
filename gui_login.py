@@ -20,6 +20,20 @@ class LoginDialog:
         
         self.top.grab_set()
         
+        # Set icon
+        try:
+            import sys, os
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+        icon_path = os.path.join(base_path, 'logo.png')
+        if os.path.exists(icon_path):
+            try:
+                photo = tk.PhotoImage(file=icon_path)
+                self.top.iconphoto(True, photo)
+            except Exception:
+                pass
+        
         self.authenticated_user = None
         
         self.build_ui()
@@ -51,7 +65,7 @@ class LoginDialog:
         ttk.Button(btn_frame, text="登 录", command=self.attempt_login).pack(side=tk.RIGHT, padx=5)
         ttk.Button(btn_frame, text="退 出", command=self.top.destroy).pack(side=tk.RIGHT)
         
-        ttk.Label(self.top, text="AutoHao v1.0.4 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="gray").pack(side=tk.BOTTOM, pady=10)
+        ttk.Label(self.top, text="AutoHao v1.0.5 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="gray").pack(side=tk.BOTTOM, pady=10)
         
         self.top.bind('<Return>', lambda e: self.attempt_login())
         

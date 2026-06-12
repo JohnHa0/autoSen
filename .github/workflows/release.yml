@@ -42,14 +42,19 @@ jobs:
       with:
         python-version: '3.8'
         
-    - name: Install dependencies
+    - name: Install Linux dependencies
+      if: startsWith(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update && sudo apt-get install -y python3-tk tk-dev
+
+    - name: Install dependencies
+      run: |
         python -m pip install --upgrade pip
         pip install pyinstaller chardet
         
     - name: Build with PyInstaller
-      run: pyinstaller --noconfirm --onefile --windowed --icon=autoHao.ico --name autoHao_${{ matrix.name }} main.py
+      shell: bash
+      run: pyinstaller --noconfirm --onefile --windowed --icon=autoHao.ico --add-data "logo.png${{ startsWith(matrix.os, 'windows') && ';' || ':' }}." --name autoHao_${{ matrix.name }} main.py
         
     - name: Build Debian Package
       if: startsWith(matrix.os, 'ubuntu')
@@ -110,7 +115,7 @@ jobs:
           docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/workspace -w /workspace python:3.8-slim bash -c "\
           apt-get update && apt-get install -y binutils python3-tk tk-dev && \
           pip install pyinstaller chardet && \
-          pyinstaller --noconfirm --onefile --windowed --icon=autoHao.ico --name autoHao_linux-arm64 main.py"
+          pyinstaller --noconfirm --onefile --windowed --icon=autoHao.ico --add-data \"logo.png:.\" --name autoHao_linux-arm64 main.py"
           sudo chown -R $USER:$USER dist build || true
           
       - name: Build Debian Package (ARM64)
