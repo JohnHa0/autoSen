@@ -44,6 +44,7 @@ jobs:
         
     - name: Install dependencies
       run: |
+        sudo apt-get update && sudo apt-get install -y python3-tk tk-dev
         python -m pip install --upgrade pip
         pip install pyinstaller chardet
         
@@ -76,6 +77,7 @@ jobs:
         Exec=/usr/bin/autoHao
         Terminal=false
         Type=Application
+        Icon=system-run
         Categories=Utility;
         EOF
         dpkg-deb --build build_deb dist/autoHao_${{ matrix.name }}.deb
@@ -104,8 +106,8 @@ jobs:
       - name: Build on ARM64
         run: |
           docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/workspace -w /workspace python:3.8-slim bash -c "\
+          apt-get update && apt-get install -y binutils python3-tk tk-dev && \
           pip install pyinstaller chardet && \
-          apt-get update && apt-get install -y binutils && \
           pyinstaller --noconfirm --onefile --windowed --name autoHao_linux-arm64 main.py"
           sudo chown -R $USER:$USER dist build || true
           
@@ -134,6 +136,7 @@ jobs:
           Exec=/usr/bin/autoHao
           Terminal=false
           Type=Application
+          Icon=system-run
           Categories=Utility;
           EOF
           dpkg-deb --build build_deb dist/autoHao_linux-arm64.deb

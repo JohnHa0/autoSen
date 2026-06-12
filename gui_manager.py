@@ -195,7 +195,7 @@ class ConfigGUI:
         ttk.Label(main_container, textvariable=self.status_var, foreground="#52c41a", font=("Microsoft YaHei", 9, "bold")).pack(pady=(15, 0))
         
         # Copyright
-        ttk.Label(self.root, text="Copyright © 2026 AutoHao v1.0.2 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="#8c8c8c", background="#f0f2f5").pack(side=tk.BOTTOM, pady=10)
+        ttk.Label(self.root, text="Copyright © 2026 AutoHao v1.0.3 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="#8c8c8c", background="#f0f2f5").pack(side=tk.BOTTOM, pady=10)
 
     def browse_dir(self, string_var):
         dir_path = filedialog.askdirectory(parent=self.root)

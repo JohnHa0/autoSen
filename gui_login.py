@@ -51,7 +51,7 @@ class LoginDialog:
         ttk.Button(btn_frame, text="登 录", command=self.attempt_login).pack(side=tk.RIGHT, padx=5)
         ttk.Button(btn_frame, text="退 出", command=self.top.destroy).pack(side=tk.RIGHT)
         
-        ttk.Label(self.top, text="AutoHao v1.0.2 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="gray").pack(side=tk.BOTTOM, pady=10)
+        ttk.Label(self.top, text="AutoHao v1.0.3 | 系统组", font=("Microsoft YaHei", 8, "italic"), foreground="gray").pack(side=tk.BOTTOM, pady=10)
         
         self.top.bind('<Return>', lambda e: self.attempt_login())
         
