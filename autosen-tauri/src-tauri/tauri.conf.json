@@ -7,8 +7,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "autosen-tauri",
-    "version": "0.1.0"
+    "productName": "autoSen",
+    "version": "1.0.6"
   },
   "tauri": {
     "allowlist": {

@@ -415,7 +415,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         </motion.div>
 
         <div className="mt-5 text-center pb-2">
-          <p className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase"> Intelligent System Terminal(一键三连) v1.0.5 | ©系统组 Hao2026·</p>
+          <p className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase"> Intelligent System Terminal(一键三连) v1.0.6 | ©系统组 Hao2026·</p>
         </div>
       </main>
     </div>

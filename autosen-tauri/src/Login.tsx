@@ -133,7 +133,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         </form>
 
         <div className="mt-10 text-center">
-          <p className="text-[11px] text-slate-400 font-medium tracking-wider">智能化业务处理终端 v1.0.5| ©系统组@2026</p>
+          <p className="text-[11px] text-slate-400 font-medium tracking-wider">智能化业务处理终端 v1.0.6| ©系统组@2026</p>
         </div>
       </motion.div>
     </div>
