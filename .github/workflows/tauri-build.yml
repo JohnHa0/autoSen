@@ -1,4 +1,4 @@
-name: Release Tauri App
+name: "Release Tauri App"
 
 on:
   push:
@@ -7,11 +7,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-ubuntu:
-    runs-on: ubuntu-20.04
+  build-standard:
+    permissions:
+      contents: write
     strategy:
+      fail-fast: false
       matrix:
-        target: [x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu]
+        include:
+          - platform: "macos-latest"
+            target: "aarch64-apple-darwin"
+          - platform: "macos-latest"
+            target: "x86_64-apple-darwin"
+          - platform: "ubuntu-20.04"
+            target: "x86_64-unknown-linux-gnu"
+          - platform: "windows-latest"
+            target: "x86_64-pc-windows-msvc"
+
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,24 +37,62 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      - name: Install Dependencies (Ubuntu)
+      - name: Install Linux Dependencies
+        if: matrix.platform == 'ubuntu-20.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-          fi
 
       - name: Install Frontend Dependencies
         working-directory: autosen-tauri
         run: npm install
 
-      - name: Build Tauri App
-        working-directory: autosen-tauri
-        run: npm run tauri build -- --target ${{ matrix.target }}
+      - name: Build & Draft Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: autosen-tauri
+          tagName: autoSen-v__VERSION__
+          releaseName: "AutoSen v__VERSION__"
+          releaseBody: "智能化业务处理终端 AutoSen 新版本发布。\n- 支持 Windows / macOS / Linux 离线部署。"
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.platform == 'macos-latest' && format('--target {0}', matrix.target) || '' }}
 
-      - name: Upload Artifacts
+  build-linux-arm64:
+    name: Build Linux ARM64
+    permissions:
+      contents: write
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ARM64 on Ubuntu 20.04 (QEMU)
+        uses: uraimo/run-on-arch-action@v2
+        with:
+          arch: aarch64
+          distro: ubuntu20.04
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          install: |
+            apt-get update -y
+            DEBIAN_FRONTEND=noninteractive apt-get install -y curl build-essential libwebkit2gtk-4.0-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+            DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          run: |
+            source $HOME/.cargo/env
+            cd autosen-tauri
+            npm install
+            npm run tauri build
+            
+            # Copy output to workspace root for artifact upload
+            mkdir -p ../artifacts
+            cp src-tauri/target/release/bundle/deb/*.deb ../artifacts/
+            cp src-tauri/target/release/bundle/appimage/*.AppImage ../artifacts/ || true
+
+      - name: Upload ARM64 Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: autoSen-${{ matrix.target }}
-          path: autosen-tauri/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+          name: autoSen-linux-arm64
+          path: artifacts/*
