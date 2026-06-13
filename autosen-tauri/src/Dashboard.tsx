@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { invoke } from '@tauri-apps/api/tauri';
 import { open as dialogOpen } from '@tauri-apps/api/dialog';
 import { open as shellOpen } from '@tauri-apps/api/shell';
-import { 
-  Save, Menu, Trash2, FolderOpen, AlertCircle, 
+import {
+  Save, Menu, Trash2, FolderOpen, AlertCircle,
   Settings, User, FileCode2, Database, ShieldCheck, HelpCircle, ChevronDown, FileText
 } from 'lucide-react';
 import logo from './assets/logo.png';
@@ -15,9 +15,9 @@ import logo from './assets/logo.png';
 function Tooltip({ children, content }: { children: React.ReactNode, content: string }) {
   const [show, setShow] = useState(false);
   return (
-    <div 
-      className="relative flex items-center" 
-      onMouseEnter={() => setShow(true)} 
+    <div
+      className="relative flex items-center"
+      onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
       {children}
@@ -44,7 +44,7 @@ function Tooltip({ children, content }: { children: React.ReactNode, content: st
 // -------------------------------------------------------------
 function Card({ title, icon, children }: { title: string, icon: React.ReactNode, children: React.ReactNode }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       // 取消了 overflow-hidden 防止 tooltip 被遮挡
@@ -71,7 +71,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   // --- 状态定义 ---
   const [config, setConfig] = useState({
     author: currentUser !== 'tsrhs' ? currentUser : '未命名',
-    pre_fix: '（文件前缀名）',
+    pre_fix: '文件名前缀内容',
     log_retention_days: '7',
     target_dir: '',
     csv_folder: '',
@@ -170,12 +170,12 @@ export default function Dashboard({ currentUser }: DashboardProps) {
 
   // 更精致紧凑的输入框样式
   const inputClasses = "flex-1 block w-full px-3 py-2.5 bg-slate-50/70 border border-slate-200/60 rounded-xl text-slate-700 text-sm placeholder-slate-400 focus:bg-white focus:ring-[3px] focus:ring-blue-500/10 focus:border-blue-400 transition-all duration-300 outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]";
-  
+
   // 自定义 Select 包装器
-  const CustomSelect = ({ value, onChange, options }: { value: string, onChange: (val: string) => void, options: {val: string, label: string}[] }) => (
+  const CustomSelect = ({ value, onChange, options }: { value: string, onChange: (val: string) => void, options: { val: string, label: string }[] }) => (
     <div className="relative w-36">
-      <select 
-        value={value} 
+      <select
+        value={value}
         onChange={e => onChange(e.target.value)}
         className="w-full appearance-none px-3 py-2.5 bg-slate-50/70 border border-slate-200/60 rounded-xl text-slate-700 text-sm focus:bg-white focus:ring-[3px] focus:ring-blue-500/10 focus:border-blue-400 transition-all duration-300 outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer pr-8"
       >
@@ -190,8 +190,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   return (
     <div className="min-h-screen bg-[#f1f5f9] flex flex-col text-slate-800 font-sans relative overflow-x-hidden">
       {/* 极简高级科技感背景 */}
-      <div className="fixed inset-0 z-0 opacity-[0.02] pointer-events-none" 
-           style={{ backgroundImage: 'radial-gradient(#0ea5e9 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+      <div className="fixed inset-0 z-0 opacity-[0.02] pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(#0ea5e9 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
       <div className="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-400/40 rounded-full mix-blend-multiply filter blur-[100px] animate-blob pointer-events-none"></div>
       <div className="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-500/30 rounded-full mix-blend-multiply filter blur-[120px] animate-blob animation-delay-2000 pointer-events-none"></div>
 
@@ -215,31 +215,31 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       {/* 主体内容区: 更紧凑的 padding 和 gap */}
       <main className="flex-1 p-5 max-w-[1200px] mx-auto w-full relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          
+
           {/* Card 1: 基础信息 */}
           <Card title="基础信息配置" icon={<Settings className="w-4 h-4" />}>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <label className="w-24 text-right text-xs font-bold text-slate-600">操作编者</label>
+                <label className="w-24 text-right text-xs font-bold text-slate-600">编者姓名</label>
                 <div className="flex-1 flex gap-2 items-center">
                   <input type="text" value={config.author} onChange={e => handleChange('author', e.target.value)}
-                         className={inputClasses} placeholder="输入操作员姓名" />
+                    className={inputClasses} placeholder="编者姓名" />
                   <Tooltip content="用于在统计表格中记录编者姓名"><HelpCircle className="w-4 h-4 text-slate-400 hover:text-blue-500 cursor-help transition-colors" /></Tooltip>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <label className="w-24 text-right text-xs font-bold text-slate-600">重命名前缀</label>
+                <label className="w-24 text-right text-xs font-bold text-slate-600">文件重命名前缀</label>
                 <div className="flex-1 flex gap-2 items-center">
                   <input type="text" value={config.pre_fix} onChange={e => handleChange('pre_fix', e.target.value)}
-                         className={inputClasses} placeholder="输入前缀" />
+                    className={inputClasses} placeholder="输入前缀" />
                   <Tooltip content="自动解压出的文本文件开头，会用此文本替换【原文】"><HelpCircle className="w-4 h-4 text-slate-400 hover:text-blue-500 cursor-help transition-colors" /></Tooltip>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <label className="w-24 text-right text-xs font-bold text-slate-600">日志保留周期</label>
                 <div className="flex-1 flex gap-3 items-center">
-                  <CustomSelect 
-                    value={config.log_retention_days} 
+                  <CustomSelect
+                    value={config.log_retention_days}
                     onChange={val => handleChange('log_retention_days', val)}
                     options={[
                       { val: "7", label: "7 天" },
@@ -260,10 +260,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           <Card title="路径与表格配置" icon={<Database className="w-4 h-4" />}>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <label className="w-24 text-right text-xs font-bold text-slate-600 leading-tight">解压保存<br/>目录</label>
+                <label className="w-24 text-right text-xs font-bold text-slate-600 leading-tight">解压保存<br />目录</label>
                 <div className="flex-1 flex gap-2">
                   <input type="text" value={config.target_dir} onChange={e => handleChange('target_dir', e.target.value)}
-                         className={`${inputClasses} bg-slate-100/50`} readOnly placeholder="请选择解压目标目录..." />
+                    className={`${inputClasses} bg-slate-100/50`} readOnly placeholder="请选择解压目标目录..." />
                   <div className="flex gap-1.5">
                     <button onClick={openTargetDir} className="px-3 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" title="打开此目录">
                       <FolderOpen className="w-4 h-4" />
@@ -273,10 +273,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <label className="w-24 text-right text-xs font-bold text-slate-600 leading-tight">CSV 表格<br/>目录</label>
+                <label className="w-24 text-right text-xs font-bold text-slate-600 leading-tight">统计表格<br />目录</label>
                 <div className="flex-1 flex gap-2">
                   <input type="text" value={config.csv_folder} onChange={e => handleChange('csv_folder', e.target.value)}
-                         className={`${inputClasses} bg-slate-100/50`} readOnly placeholder="请选择表格导出目录..." />
+                    className={`${inputClasses} bg-slate-100/50`} readOnly placeholder="请选择表格导出目录..." />
                   <div className="flex gap-1.5">
                     <button onClick={openLogFolder} className="px-3 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" title="打开此目录">
                       <FolderOpen className="w-4 h-4" />
@@ -286,10 +286,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <label className="w-24 text-right text-xs font-bold text-slate-600">表格命名模板</label>
+                <label className="w-24 text-right text-xs font-bold text-slate-600">统计表命名模板</label>
                 <div className="flex-1 flex gap-2 items-center">
                   <input type="text" value={config.csv_tmpl} onChange={e => handleChange('csv_tmpl', e.target.value)}
-                         className={inputClasses} />
+                    className={inputClasses} />
                   <Tooltip content={"支持动态标签: {author}, {year}, {month}, {day}\n例如: {author}_汇总_{year}.csv"}><HelpCircle className="w-4 h-4 text-slate-400 hover:text-blue-500 cursor-help transition-colors" /></Tooltip>
                 </div>
               </div>
@@ -302,8 +302,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className="flex items-center gap-3">
                 <label className="w-24 text-right text-xs font-bold text-slate-600">尾注插入位置</label>
                 <div className="flex-1 flex gap-2 items-center">
-                  <CustomSelect 
-                    value={config.insert_pos} 
+                  <CustomSelect
+                    value={config.insert_pos}
                     onChange={val => handleChange('insert_pos', val)}
                     options={[
                       { val: "before_keyword", label: "主题词上一行" },
@@ -315,8 +315,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className="flex items-center gap-3">
                 <label className="w-24 text-right text-xs font-bold text-slate-600">文本读写编码</label>
                 <div className="flex-1 flex gap-2 items-center">
-                  <CustomSelect 
-                    value={config.file_encoding} 
+                  <CustomSelect
+                    value={config.file_encoding}
                     onChange={val => handleChange('file_encoding', val)}
                     options={[
                       { val: "auto", label: "自动检测" },
@@ -328,9 +328,9 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               </div>
               <div className="flex items-start gap-3">
                 <label className="w-24 text-right text-xs font-bold text-slate-600 pt-3">待插入内容</label>
-                <textarea 
+                <textarea
                   value={config.comment} onChange={e => handleChange('comment', e.target.value)}
-                  className={`${inputClasses} h-20 resize-none`} 
+                  className={`${inputClasses} h-20 resize-none`}
                   placeholder="在此输入你要插入的尾注..."
                 />
               </div>
@@ -365,11 +365,11 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               </label>
 
               <div className="flex items-center gap-3 pt-1">
-                <label className="w-24 text-right text-xs font-bold text-slate-600 leading-tight">监听目标<br/>目录</label>
+                <label className="w-24 text-right text-xs font-bold text-slate-600 leading-tight">监听目标<br />目录</label>
                 <div className="flex-1 flex gap-2">
                   <input type="text" value={config.monitor_dir} onChange={e => handleChange('monitor_dir', e.target.value)}
-                         className={`${inputClasses} transition-opacity ${!config.enable_monitor ? 'opacity-50 bg-slate-100' : ''}`} 
-                         readOnly disabled={!config.enable_monitor} placeholder="请选择监听目录..." />
+                    className={`${inputClasses} transition-opacity ${!config.enable_monitor ? 'opacity-50 bg-slate-100' : ''}`}
+                    readOnly disabled={!config.enable_monitor} placeholder="请选择监听目录..." />
                   <button onClick={() => pickFolder('monitor_dir')} disabled={!config.enable_monitor} className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap active:scale-95">浏览...</button>
                 </div>
               </div>
@@ -378,7 +378,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         </div>
 
         {/* 底部控制台 */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -406,16 +406,16 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                   exit={{ opacity: 0, scale: 0.9, x: 20 }}
                   className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold shadow-sm border ${statusMsg.type === 'success' ? 'bg-emerald-50/80 text-emerald-700 border-emerald-100/80' : 'bg-rose-50/80 text-rose-700 border-rose-100/80'} backdrop-blur-sm`}
                 >
-                  {statusMsg.type === 'success' ? <ShieldCheck className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />} 
+                  {statusMsg.type === 'success' ? <ShieldCheck className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                   {statusMsg.text}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </motion.div>
-        
+
         <div className="mt-5 text-center pb-2">
-          <p className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase">AutoSen Core v1.0.5 · Intelligent System Terminal</p>
+          <p className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase"> Intelligent System Terminal(一键三连) v1.0.5 | ©系统组 Hao2026·</p>
         </div>
       </main>
     </div>
