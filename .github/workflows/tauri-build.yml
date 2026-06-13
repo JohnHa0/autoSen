@@ -8,20 +8,15 @@ on:
 
 jobs:
   build-standard:
+    name: Build Linux x86_64
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: "macos-latest"
-            target: "aarch64-apple-darwin"
-          - platform: "macos-latest"
-            target: "x86_64-apple-darwin"
           - platform: "ubuntu-20.04"
             target: "x86_64-unknown-linux-gnu"
-          - platform: "windows-latest"
-            target: "x86_64-pc-windows-msvc"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -55,10 +50,10 @@ jobs:
           projectPath: autosen-tauri
           tagName: autoSen-v__VERSION__
           releaseName: "AutoSen v__VERSION__"
-          releaseBody: "智能化业务处理终端 AutoSen 新版本发布。\n- 支持 Windows / macOS / Linux 离线部署。"
+          releaseBody: "智能化业务处理终端 AutoSen 新版本发布。\n- 专注于国产 Linux 发行版（如麒麟系统、UOS）离线部署支持。\n- 基于 Ubuntu 20.04 (GLIBC 2.31) 构建，具备极高的向后兼容性。"
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.platform == 'macos-latest' && format('--target {0}', matrix.target) || '' }}
+          args: ""
 
   build-linux-arm64:
     name: Build Linux ARM64
