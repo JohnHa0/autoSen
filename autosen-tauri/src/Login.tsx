@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Lock, User, LogIn, AlertCircle } from 'lucide-react';
+import { Lock, User, LogIn, AlertCircle, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
+import logo from './assets/logo.png';
 
 interface LoginProps {
   onLoginSuccess: (user: string) => void;
@@ -52,86 +53,87 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 relative overflow-hidden">
-      {/* Decorative background circles */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
-      <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
-      <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 relative overflow-hidden font-sans">
+      {/* 科技感网格与环境光背景 */}
+      <div className="absolute inset-0 z-0 opacity-[0.03]" 
+           style={{ backgroundImage: 'radial-gradient(#3b82f6 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+      <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-cyan-300 rounded-full mix-blend-multiply filter blur-[120px] opacity-30 animate-blob"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[800px] h-[800px] bg-blue-300 rounded-full mix-blend-multiply filter blur-[120px] opacity-30 animate-blob animation-delay-2000"></div>
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 p-8 relative z-10"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-md bg-white/70 backdrop-blur-2xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-white/60 p-10 relative z-10"
       >
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl shadow-lg flex items-center justify-center">
-            <Lock className="w-8 h-8 text-white" />
-          </div>
+        <div className="flex flex-col items-center mb-10">
+          <motion.div 
+            whileHover={{ scale: 1.05, rotate: 2 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className="w-20 h-20 mb-6 rounded-2xl bg-gradient-to-br from-white to-blue-50/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-white flex items-center justify-center p-3"
+          >
+            <img src={logo} alt="AutoSen Logo" className="w-full h-full object-contain filter drop-shadow-sm" />
+          </motion.div>
+          <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">AutoSen</h2>
+          <p className="text-sm text-slate-500 mt-2 font-medium tracking-wide">智能化业务处理终端</p>
         </div>
-        
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-8 tracking-tight">欢迎使用自动化系统</h2>
 
         <form onSubmit={attemptLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">账 号</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-gray-400" />
+          <div className="space-y-5">
+            <div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-blue-500 text-slate-400">
+                  <User className="h-5 w-5" />
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="block w-full pl-12 pr-4 py-3.5 bg-slate-50/50 border border-slate-200/80 rounded-2xl text-slate-700 placeholder-slate-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all duration-300 outline-none shadow-sm"
+                  placeholder="用户账号"
+                />
               </div>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow bg-white/50"
-                placeholder="请输入用户名"
-              />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">密 码</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
+            <div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-blue-500 text-slate-400">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  style={{ imeMode: 'disabled' }}
+                  className="block w-full pl-12 pr-4 py-3.5 bg-slate-50/50 border border-slate-200/80 rounded-2xl text-slate-700 placeholder-slate-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all duration-300 outline-none shadow-sm"
+                  placeholder="认证密钥"
+                />
               </div>
-              <input
-                type="password"
-                value={password}
-                onChange={handlePasswordChange}
-                style={{ imeMode: 'disabled' }}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow bg-white/50"
-                placeholder="请输入密码"
-              />
             </div>
-            <p className="mt-2 text-xs text-gray-500 flex items-center">
-              * 密码框强制英文模式，自动转换中文标点
-            </p>
           </div>
 
           {error && (
             <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 p-3.5 text-sm text-rose-600 bg-rose-50/80 border border-rose-100 rounded-2xl"
             >
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <p>{error}</p>
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="font-medium">{error}</span>
             </motion.div>
           )}
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-xl shadow-md transition-all active:scale-[0.98]"
+            className="group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-semibold py-4 px-4 rounded-2xl shadow-[0_8px_20px_rgb(59,130,246,0.3)] hover:shadow-[0_12px_25px_rgb(59,130,246,0.4)] transition-all duration-300 active:scale-[0.98]"
           >
-            <LogIn className="w-5 h-5" />
-            <span>登 录 进 入 统</span>
+            <ShieldCheck className="w-5 h-5 transition-transform group-hover:scale-110" />
+            <span className="tracking-widest">安全登录</span>
           </button>
         </form>
 
-        <div className="mt-8 text-center border-t border-gray-100 pt-6">
-          <p className="text-xs text-gray-400 font-medium">AutoHao v1.0.5 | 系统组</p>
-          <p className="text-xs text-gray-400 mt-1">Copyright © 2026 All Rights Reserved</p>
+        <div className="mt-10 text-center">
+          <p className="text-[11px] text-slate-400 font-medium tracking-wider">AUTOSEN CORE V1.0.5</p>
         </div>
       </motion.div>
     </div>

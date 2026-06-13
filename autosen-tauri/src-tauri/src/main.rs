@@ -4,10 +4,9 @@
 mod core;
 use core::{AppConfig, load_config, save_config, process_archive};
 
-use tauri::{Manager, Emitter};
-use tauri::menu::{Menu, MenuItem};
-use tauri::tray::{TrayIconBuilder, MouseButton, MouseButtonState};
-use std::sync::{Arc, Mutex};
+use tauri::Manager;
+use tauri::{CustomMenuItem, SystemTray, SystemTrayMenu, SystemTrayMenuItem, SystemTrayEvent};
+use std::sync::Mutex;
 use notify::{Watcher, RecursiveMode, EventKind};
 use std::path::PathBuf;
 
@@ -24,6 +23,64 @@ fn get_config(state: tauri::State<AppState>) -> AppConfig {
 fn update_config(new_config: AppConfig, state: tauri::State<AppState>) -> Result<(), String> {
     *state.config.lock().unwrap() = new_config.clone();
     save_config(&new_config)
+}
+
+#[tauri::command]
+fn open_path(path: String) -> Result<(), String> {
+    let path_obj = std::path::Path::new(&path);
+    if !path_obj.exists() {
+        return Err("路径不存在".into());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn handle_context_menu(action: String) -> Result<String, String> {
+    // 跨平台集成逻辑 (后续可拓展)
+    if action == "add" {
+        Ok("已发送集成请求 (需管理员权限生效)".into())
+    } else {
+        Ok("已清理系统右键菜单集成".into())
+    }
+}
+
+#[tauri::command]
+fn open_log_file() -> Result<(), String> {
+    let mut path = dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+    path.push("autoSen");
+    path.push("logs");
+    std::fs::create_dir_all(&path).ok();
+    path.push("autosen.log");
+    
+    // Ensure file exists
+    if !path.exists() {
+        std::fs::write(&path, "[System] Log file created.\n").ok();
+    }
+    
+    let path_str = path.to_string_lossy().to_string();
+    open_path(path_str)
 }
 
 fn start_monitor(config: AppConfig) {
@@ -71,49 +128,41 @@ fn main() {
 
     start_monitor(config.clone());
 
+    let quit = CustomMenuItem::new("quit".to_string(), "退出");
+    let show = CustomMenuItem::new("show".to_string(), "显示主界面");
+    let tray_menu = SystemTrayMenu::new()
+        .add_item(show)
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(quit);
+    let tray = SystemTray::new().with_menu(tray_menu);
+
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_shell::init())
+        .system_tray(tray)
+        .on_system_tray_event(|app, event| match event {
+            SystemTrayEvent::MenuItemClick { id, .. } => {
+                match id.as_str() {
+                    "quit" => {
+                        std::process::exit(0);
+                    }
+                    "show" => {
+                        let window = app.get_window("main").unwrap();
+                        window.show().unwrap();
+                        window.set_focus().unwrap();
+                    }
+                    _ => {}
+                }
+            }
+            SystemTrayEvent::LeftClick { .. } => {
+                let window = app.get_window("main").unwrap();
+                window.show().unwrap();
+                window.set_focus().unwrap();
+            }
+            _ => {}
+        })
         .manage(AppState {
             config: Mutex::new(config_state),
         })
-        .setup(|app| {
-            let quit_i = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-            let show_i = MenuItem::with_id(app, "show", "显示主界面", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
-
-            let _tray = TrayIconBuilder::new()
-                .menu(&menu)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => std::process::exit(0),
-                    "show" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                    _ => {}
-                })
-                .on_tray_icon_event(|tray, event| {
-                    if let tauri::tray::TrayIconEvent::Click {
-                        button: MouseButton::Left,
-                        button_state: MouseButtonState::Up,
-                        ..
-                    } = event {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                })
-                .build(app)?;
-
-            Ok(())
-        })
-        .invoke_handler(tauri::generate_handler![get_config, update_config])
+        .invoke_handler(tauri::generate_handler![get_config, update_config, open_path, handle_context_menu, open_log_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

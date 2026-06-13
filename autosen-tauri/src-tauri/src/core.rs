@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::fs;
-use std::io::{Read, Write};
+use std::io::Write;
 use zip::ZipArchive;
 use encoding_rs::{GBK, UTF_8};
 use regex::Regex;
@@ -77,7 +77,7 @@ pub fn process_archive(archive_path: &str, config: &AppConfig) -> Result<(), Str
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
         
-        let outpath = match file.enclosed_name() {
+        let _outpath = match file.enclosed_name() {
             Some(path) => path.to_owned(),
             None => continue,
         };
@@ -155,7 +155,7 @@ fn process_text_file(file_path: &Path, config: &AppConfig) -> Result<(), String>
         UTF_8.decode(&bytes)
     } else {
         let (c, e, _) = UTF_8.decode(&bytes);
-        if c.contains('') {
+        if c.contains('\u{FFFD}') {
             GBK.decode(&bytes)
         } else {
             (c, e, false)
