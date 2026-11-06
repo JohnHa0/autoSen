@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "autoSen",
-    "version": "1.0.6"
+    "version": "1.0.8"
   },
   "tauri": {
     "allowlist": {
@@ -30,10 +30,14 @@
     },
     "bundle": {
       "active": true,
-      "category": "DeveloperTool",
+      "category": "Utility",
       "copyright": "",
       "deb": {
-        "depends": []
+        "depends": [
+          "libwebkit2gtk-4.0-37",
+          "libgtk-3-0",
+          "libayatana-appindicator3-1 | libappindicator3-1"
+        ]
       },
       "externalBin": [],
       "icon": [
@@ -44,7 +48,7 @@
         "icons/icon.ico"
       ],
       "identifier": "com.tsrhs.autosen",
-      "longDescription": "",
+      "longDescription": "监控指定目录中的 ZIP 压缩包，安全解压文本文件，自动重命名、移动、插入文字片段并生成 CSV 汇总。",
       "macOS": {
         "entitlements": null,
         "exceptionDomain": "",
@@ -53,7 +57,7 @@
         "signingIdentity": null
       },
       "resources": [],
-      "shortDescription": "",
+      "shortDescription": "压缩包自动监控与文本整理工具",
       "targets": "all",
       "windows": {
         "certificateThumbprint": null,
@@ -76,7 +80,7 @@
         "fullscreen": false,
         "height": 600,
         "resizable": true,
-        "title": "autosen-tauri",
+        "title": "AutoSen",
         "width": 800
       }
     ]

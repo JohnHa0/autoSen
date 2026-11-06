@@ -2,16 +2,18 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod core;
-use core::{AppConfig, load_config, save_config, process_archive};
+use core::{load_config, log_message, process_archive, save_config, AppConfig};
 
-use tauri::Manager;
-use tauri::{CustomMenuItem, SystemTray, SystemTrayMenu, SystemTrayMenuItem, SystemTrayEvent};
-use std::sync::Mutex;
-use notify::{Watcher, RecursiveMode, EventKind};
+use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::{mpsc, Mutex};
+use std::time::Duration;
+use tauri::Manager;
+use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
 
 struct AppState {
     config: Mutex<AppConfig>,
+    monitor_tx: mpsc::Sender<AppConfig>,
 }
 
 #[tauri::command]
@@ -21,8 +23,12 @@ fn get_config(state: tauri::State<AppState>) -> AppConfig {
 
 #[tauri::command]
 fn update_config(new_config: AppConfig, state: tauri::State<AppState>) -> Result<(), String> {
-    *state.config.lock().unwrap() = new_config.clone();
-    save_config(&new_config)
+    save_config(&new_config)?;
+    *state.config.lock().map_err(|_| "配置锁已损坏")? = new_config.clone();
+    state
+        .monitor_tx
+        .send(new_config)
+        .map_err(|_| "无法重新加载监控配置".to_string())
 }
 
 #[tauri::command]
@@ -58,12 +64,8 @@ fn open_path(path: String) -> Result<(), String> {
 
 #[tauri::command]
 fn handle_context_menu(action: String) -> Result<String, String> {
-    // 跨平台集成逻辑 (后续可拓展)
-    if action == "add" {
-        Ok("已发送集成请求 (需管理员权限生效)".into())
-    } else {
-        Ok("已清理系统右键菜单集成".into())
-    }
+    let _ = action;
+    Err("麒麟不同桌面环境的右键菜单机制不一致，此版本未启用该功能".into())
 }
 
 #[tauri::command]
@@ -73,39 +75,131 @@ fn open_log_file() -> Result<(), String> {
     path.push("logs");
     std::fs::create_dir_all(&path).ok();
     path.push("autosen.log");
-    
+
     // Ensure file exists
     if !path.exists() {
         std::fs::write(&path, "[System] Log file created.\n").ok();
     }
-    
+
     let path_str = path.to_string_lossy().to_string();
     open_path(path_str)
 }
 
-fn start_monitor(config: AppConfig) {
-    if !config.enable_monitor || config.monitor_dir.is_empty() { return; }
-    
-    let path = PathBuf::from(&config.monitor_dir);
-    if !path.exists() { return; }
-
+fn start_monitor(initial_config: AppConfig) -> mpsc::Sender<AppConfig> {
+    let (config_tx, config_rx) = mpsc::channel::<AppConfig>();
     std::thread::spawn(move || {
-        let (tx, rx) = std::sync::mpsc::channel();
-        let mut watcher = notify::recommended_watcher(tx).unwrap();
-        watcher.watch(&path, RecursiveMode::NonRecursive).unwrap();
+        let mut config = initial_config;
+        let mut pending: HashMap<PathBuf, ((u64, Option<std::time::SystemTime>), u8)> =
+            HashMap::new();
+        let mut handled: HashMap<PathBuf, (u64, Option<std::time::SystemTime>)> = HashMap::new();
+        log_monitor_state(&config);
 
-        for res in rx {
-            if let Ok(event) = res {
-                if let EventKind::Create(_) = event.kind {
-                    for path in event.paths {
-                        if path.extension().unwrap_or_default() == "zip" {
-                            let _ = process_archive(&path.to_string_lossy(), &config);
-                        }
-                    }
+        loop {
+            match config_rx.recv_timeout(Duration::from_millis(500)) {
+                Ok(updated) => {
+                    config = updated;
+                    pending.clear();
+                    handled.clear();
+                    log_monitor_state(&config);
+                    continue;
                 }
+                Err(mpsc::RecvTimeoutError::Disconnected) => break,
+                Err(mpsc::RecvTimeoutError::Timeout) => {}
             }
+
+            if !config.enable_monitor {
+                continue;
+            }
+            poll_monitor_directory(&config, &mut pending, &mut handled);
         }
     });
+    config_tx
+}
+
+type FileSignature = (u64, Option<std::time::SystemTime>);
+
+fn log_monitor_state(config: &AppConfig) {
+    if !config.enable_monitor {
+        log_message("INFO", "目录监控已停止", &config.log_retention_days);
+        return;
+    }
+    let path = PathBuf::from(&config.monitor_dir);
+    if path.is_dir() {
+        log_message(
+            "INFO",
+            &format!("开始监听: {}", path.display()),
+            &config.log_retention_days,
+        );
+    } else {
+        log_message(
+            "ERROR",
+            &format!("监听目录不存在: {}", path.display()),
+            &config.log_retention_days,
+        );
+    }
+}
+
+fn poll_monitor_directory(
+    config: &AppConfig,
+    pending: &mut HashMap<PathBuf, (FileSignature, u8)>,
+    handled: &mut HashMap<PathBuf, FileSignature>,
+) {
+    let directory = PathBuf::from(&config.monitor_dir);
+    let entries = match std::fs::read_dir(&directory) {
+        Ok(entries) => entries,
+        Err(_) => return,
+    };
+    let mut ready = Vec::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !is_zip_path(&path) {
+            continue;
+        }
+        let metadata = match entry.metadata() {
+            Ok(metadata) if metadata.is_file() => metadata,
+            _ => continue,
+        };
+        let signature = (metadata.len(), metadata.modified().ok());
+        if handled.get(&path) == Some(&signature) {
+            continue;
+        }
+        let state = pending.entry(path.clone()).or_insert((signature, 0));
+        if state.0 == signature {
+            state.1 = state.1.saturating_add(1);
+            if state.1 >= 3 {
+                ready.push((path, signature));
+            }
+        } else {
+            *state = (signature, 0);
+        }
+    }
+    pending.retain(|path, _| path.is_file());
+
+    for (path, signature) in ready {
+        pending.remove(&path);
+        let display = path.to_string_lossy().to_string();
+        match process_archive(&display, config) {
+            Ok(()) => log_message(
+                "INFO",
+                &format!("处理完成: {display}"),
+                &config.log_retention_days,
+            ),
+            Err(error) => {
+                handled.insert(path, signature);
+                log_message(
+                    "ERROR",
+                    &format!("处理失败: {display}; {error}"),
+                    &config.log_retention_days,
+                );
+            }
+        }
+    }
+}
+
+fn is_zip_path(path: &std::path::Path) -> bool {
+    path.extension()
+        .map(|extension| extension.to_string_lossy().eq_ignore_ascii_case("zip"))
+        .unwrap_or(false)
 }
 
 fn main() {
@@ -121,12 +215,13 @@ fn main() {
             std::process::exit(1);
         }
         if let Err(e) = process_archive(file_path, &config) {
-            println!("Process Error: {}", e);
+            eprintln!("Process Error: {}", e);
+            std::process::exit(2);
         }
         std::process::exit(0);
     }
 
-    start_monitor(config.clone());
+    let monitor_tx = start_monitor(config.clone());
 
     let quit = CustomMenuItem::new("quit".to_string(), "退出");
     let show = CustomMenuItem::new("show".to_string(), "显示主界面");
@@ -139,19 +234,17 @@ fn main() {
     tauri::Builder::default()
         .system_tray(tray)
         .on_system_tray_event(|app, event| match event {
-            SystemTrayEvent::MenuItemClick { id, .. } => {
-                match id.as_str() {
-                    "quit" => {
-                        std::process::exit(0);
-                    }
-                    "show" => {
-                        let window = app.get_window("main").unwrap();
-                        window.show().unwrap();
-                        window.set_focus().unwrap();
-                    }
-                    _ => {}
+            SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
+                "quit" => {
+                    std::process::exit(0);
                 }
-            }
+                "show" => {
+                    let window = app.get_window("main").unwrap();
+                    window.show().unwrap();
+                    window.set_focus().unwrap();
+                }
+                _ => {}
+            },
             SystemTrayEvent::LeftClick { .. } => {
                 let window = app.get_window("main").unwrap();
                 window.show().unwrap();
@@ -161,8 +254,15 @@ fn main() {
         })
         .manage(AppState {
             config: Mutex::new(config_state),
+            monitor_tx,
         })
-        .invoke_handler(tauri::generate_handler![get_config, update_config, open_path, handle_context_menu, open_log_file])
+        .invoke_handler(tauri::generate_handler![
+            get_config,
+            update_config,
+            open_path,
+            handle_context_menu,
+            open_log_file
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

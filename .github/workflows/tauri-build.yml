@@ -1,93 +1,102 @@
-name: "Release Tauri App"
+name: Build AutoSen Linux DEB
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [master]
+    tags: ['v*']
+    paths:
+      - 'autosen-tauri/**'
+      - '.github/workflows/tauri-build.yml'
+  pull_request:
+    paths:
+      - 'autosen-tauri/**'
+      - '.github/workflows/tauri-build.yml'
   workflow_dispatch:
 
+concurrency:
+  group: autosen-deb-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  build-standard:
-    name: Build Linux x86_64
-    permissions:
-      contents: write
+  build:
+    name: Build ${{ matrix.arch }} (glibc 2.31)
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: "ubuntu-20.04"
-            target: "x86_64-unknown-linux-gnu"
-
-    runs-on: ${{ matrix.platform }}
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Install Linux Dependencies
-        if: matrix.platform == 'ubuntu-20.04'
+      - name: Check tag and application version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+          app_version="$(node -p "require('./autosen-tauri/package.json').version")"
+          if [[ "${GITHUB_REF_NAME}" != "v${app_version}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package version v${app_version}" >&2
+            exit 1
+          fi
 
-      - name: Install Frontend Dependencies
-        working-directory: autosen-tauri
-        run: npm install
+      - name: Build glibc 2.31 toolchain image
+        run: |
+          docker build \
+            --file autosen-tauri/packaging/Dockerfile.glibc231 \
+            --tag autosen-builder:glibc231 \
+            autosen-tauri/packaging
 
-      - name: Build & Draft Release
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectPath: autosen-tauri
-          tagName: autoSen-v__VERSION__
-          releaseName: "AutoSen v__VERSION__"
-          releaseBody: "智能化业务处理终端 AutoSen 新版本发布。\n- 专注于国产 Linux 发行版（如麒麟系统、UOS）离线部署支持。\n- 基于 Ubuntu 20.04 (GLIBC 2.31) 构建，具备极高的向后兼容性。"
-          releaseDraft: true
-          prerelease: false
-          args: ""
+      - name: Build and verify DEB
+        run: |
+          docker run --rm \
+            --env EXPECTED_ARCH=${{ matrix.arch }} \
+            --volume "$GITHUB_WORKSPACE:/workspace" \
+            --workdir /workspace/autosen-tauri \
+            autosen-builder:glibc231 \
+            bash packaging/ci-build-deb.sh
 
-  build-linux-arm64:
-    name: Build Linux ARM64
-    permissions:
-      contents: write
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build ARM64 on Ubuntu 20.04 (QEMU)
-        uses: uraimo/run-on-arch-action@v2
-        with:
-          arch: aarch64
-          distro: ubuntu20.04
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          install: |
-            apt-get update -y
-            DEBIAN_FRONTEND=noninteractive apt-get install -y curl build-essential libwebkit2gtk-4.0-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-            DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          run: |
-            source $HOME/.cargo/env
-            cd autosen-tauri
-            npm install
-            npm run tauri build
-            
-            # Copy output to workspace root for artifact upload
-            mkdir -p ../artifacts
-            cp src-tauri/target/release/bundle/deb/*.deb ../artifacts/
-            cp src-tauri/target/release/bundle/appimage/*.AppImage ../artifacts/ || true
-
-      - name: Upload ARM64 Artifact
+      - name: Upload ${{ matrix.arch }} artifact
         uses: actions/upload-artifact@v4
         with:
-          name: autoSen-linux-arm64
-          path: artifacts/*
+          name: AutoSen-linux-${{ matrix.arch }}-glibc231
+          path: autosen-tauri/artifacts/${{ matrix.arch }}/*
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: AutoSen-linux-*-glibc231
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release and upload DEBs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --title "AutoSen $GITHUB_REF_NAME" \
+              --generate-notes
+          fi
+          gh release upload "$GITHUB_REF_NAME" release-assets/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber

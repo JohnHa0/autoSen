@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { invoke } from '@tauri-apps/api/tauri';
 import { open as dialogOpen } from '@tauri-apps/api/dialog';
-import { open as shellOpen } from '@tauri-apps/api/shell';
 import {
   Save, Menu, Trash2, FolderOpen, AlertCircle,
   Settings, User, FileCode2, Database, ShieldCheck, HelpCircle, ChevronDown, FileText
@@ -159,12 +158,12 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     }
   };
 
-  const handleContextMenu = (action: 'add' | 'remove') => {
-    // 占位符功能，提示用户
-    if (action === 'add') {
-      showStatus('系统右键菜单集成已触发 (需以管理员权限运行生效)');
-    } else {
-      showStatus('已清理系统右键菜单集成');
+  const handleContextMenu = async (action: 'add' | 'remove') => {
+    try {
+      const message = await invoke<string>('handle_context_menu', { action });
+      showStatus(message);
+    } catch (e) {
+      showStatus(`操作失败: ${e}`, 'error');
     }
   };
 
@@ -415,7 +414,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         </motion.div>
 
         <div className="mt-5 text-center pb-2">
-          <p className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase"> Intelligent System Terminal(一键三连) v1.0.6 | ©系统组 Hao2026·</p>
+          <p className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase"> Intelligent System Terminal(一键三连) v1.0.8 | ©系统组 Hao2026·</p>
         </div>
       </main>
     </div>
