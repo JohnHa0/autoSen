@@ -21,3 +21,6 @@ chrono = "0.4"
 dirs = "5.0"
 walkdir = "2.5.0"
 
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
