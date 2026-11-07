@@ -13,7 +13,7 @@ fi
 cd "$script_dir"
 sha256sum -c SHA256SUMS
 
-mapfile -t app_debs < <(find "$script_dir/debs" -maxdepth 1 -type f -name 'autosen-tauri_*.deb' -print)
+mapfile -t app_debs < <(find "$script_dir/debs" -maxdepth 1 -type f -name 'auto-sen_*.deb' -print)
 if [[ "${#app_debs[@]}" -ne 1 ]]; then
   echo "错误：离线包中应当只有一个 AutoSen 主安装包。" >&2
   exit 1

@@ -19,16 +19,23 @@ fi
 npm ci
 npm run tauri build -- --bundles deb
 
-binary=src-tauri/target/release/autosen-tauri
-max_glibc="$(objdump -T "$binary" | sed -n 's/.*GLIBC_\([0-9][0-9.]*\).*/\1/p' | sort -V | tail -n 1)"
-if [[ -z "$max_glibc" ]] || dpkg --compare-versions "$max_glibc" gt 2.31; then
-  echo "Invalid maximum GLIBC symbol: ${max_glibc:-none}" >&2
-  exit 1
-fi
-
 mapfile -t packages < <(find src-tauri/target/release/bundle/deb -maxdepth 1 -type f -name '*.deb' -print)
 if [[ "${#packages[@]}" -ne 1 ]]; then
   echo "Expected exactly one DEB, found ${#packages[@]}" >&2
+  exit 1
+fi
+
+extracted_dir="$(mktemp -d)"
+trap 'rm -rf -- "$extracted_dir"' EXIT
+dpkg-deb -x "${packages[0]}" "$extracted_dir"
+mapfile -t binaries < <(find "$extracted_dir/usr/bin" -maxdepth 1 -type f -executable -print)
+if [[ "${#binaries[@]}" -ne 1 ]]; then
+  echo "Expected one packaged executable in /usr/bin, found ${#binaries[@]}" >&2
+  exit 1
+fi
+max_glibc="$(objdump -T "${binaries[0]}" | sed -n 's/.*GLIBC_\([0-9][0-9.]*\).*/\1/p' | sort -V | tail -n 1)"
+if [[ -z "$max_glibc" ]] || dpkg --compare-versions "$max_glibc" gt 2.31; then
+  echo "Invalid maximum GLIBC symbol: ${max_glibc:-none}" >&2
   exit 1
 fi
 

@@ -39,9 +39,8 @@ sudo ./install-offline.sh
 ## 4. 验收
 
 ```bash
-dpkg -s autosen-tauri
-ldd /usr/bin/autosen-tauri | grep 'not found' && echo '存在缺失库' || echo '动态库完整'
-autosen-tauri --help
+dpkg -s auto-sen
+ldd /usr/bin/auto-sen | grep 'not found' && echo '存在缺失库' || echo '动态库完整'
 ```
 
 建议在一台未安装开发依赖的干净离线麒麟机器上完成最终验收，并分别保存 amd64、arm64 的安装日志。

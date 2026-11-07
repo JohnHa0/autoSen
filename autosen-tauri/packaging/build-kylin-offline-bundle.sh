@@ -29,21 +29,23 @@ cd "$project_dir"
 npm ci
 npm run tauri build -- --bundles deb
 
-binary="$project_dir/src-tauri/target/release/autosen-tauri"
-if [[ ! -x "$binary" ]]; then
-  echo "错误：未找到构建后的程序 $binary" >&2
-  exit 1
-fi
-
-max_glibc="$(objdump -T "$binary" | sed -n 's/.*GLIBC_\([0-9][0-9.]*\).*/\1/p' | sort -V | tail -n 1)"
-if [[ -n "$max_glibc" ]] && dpkg --compare-versions "$max_glibc" gt "2.31"; then
-  echo "错误：程序要求 GLIBC_$max_glibc，无法保证在 glibc 2.31 上运行。" >&2
-  exit 1
-fi
-
 mapfile -t deb_files < <(find "$project_dir/src-tauri/target/release/bundle/deb" -maxdepth 1 -type f -name '*.deb' -print)
 if [[ "${#deb_files[@]}" -ne 1 ]]; then
   echo "错误：预期生成 1 个 deb，实际找到 ${#deb_files[@]} 个。" >&2
+  exit 1
+fi
+
+extracted_dir="$(mktemp -d)"
+dpkg-deb -x "${deb_files[0]}" "$extracted_dir"
+mapfile -t binaries < <(find "$extracted_dir/usr/bin" -maxdepth 1 -type f -executable -print)
+if [[ "${#binaries[@]}" -ne 1 ]]; then
+  echo "错误：deb 中未找到唯一的可执行程序。" >&2
+  exit 1
+fi
+max_glibc="$(objdump -T "${binaries[0]}" | sed -n 's/.*GLIBC_\([0-9][0-9.]*\).*/\1/p' | sort -V | tail -n 1)"
+rm -rf -- "$extracted_dir"
+if [[ -z "$max_glibc" ]] || dpkg --compare-versions "$max_glibc" gt "2.31"; then
+  echo "错误：程序要求 GLIBC_${max_glibc:-unknown}，无法保证在 glibc 2.31 上运行。" >&2
   exit 1
 fi
 
